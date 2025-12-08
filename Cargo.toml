@@ -1,0 +1,12 @@
+[package]
+name = "breadbot"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0.100"
+dotenv = "0.15.0"
+openai-api-rs = "8.0.2"
+rusqlite = { version = "0.37.0", features = ["bundled"] }
+serenity = "0.12.4"
+tokio = { version = "1.48.0", features = ["full"] }
