@@ -102,7 +102,18 @@ async fn rename_users(ctx: &Context, interaction: &CommandInteraction) -> sereni
             let new_name: String = match db.get(&user_id) {
                 Some(bread_name) => bread_name.to_string(),
                 None => {
-                    let generated_name = generate_name(current_name).await?;
+                    let generated_name = {
+                        loop {
+                            match generate_name(current_name).await {
+                                Ok(generated_name) => break generated_name,
+                                Err(e) => {
+                                    eprintln!(
+                                        "[Error] ({e}) when generating username. Retrying..."
+                                    );
+                                }
+                            }
+                        }
+                    };
                     insert_name_to_database(user_id, &generated_name)
                         .map_err(|_| serenity::Error::Other("Failed inserting name into DB"))?;
                     generated_name
