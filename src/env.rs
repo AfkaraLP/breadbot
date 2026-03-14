@@ -8,7 +8,7 @@ pub struct EnvVars {
     pub llm_api_key: Option<String>,
 }
 
-pub const ENV_VARS: LazyLock<EnvVars> = LazyLock::new(|| EnvVars {
+pub static ENV_VARS: LazyLock<EnvVars> = LazyLock::new(|| EnvVars {
     guild_id: dotenv::var("GUILD_ID")
         .map(|v| v.parse::<u64>())
         .expect("No guild id found in .env")

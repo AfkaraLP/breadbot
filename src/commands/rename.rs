@@ -6,12 +6,11 @@ use anyhow::anyhow;
 
 use openai_api_rs::v1::chat_completion::chat_completion::ChatCompletionRequest;
 use openai_api_rs::v1::chat_completion::{ChatCompletionMessage, Content, MessageRole};
-use openai_api_rs::v1::completion::CompletionRequest;
 use rusqlite::{OptionalExtension, params};
 
 use serenity::all::{
     CommandInteraction, Context, CreateInteractionResponse, CreateInteractionResponseFollowup,
-    CreateInteractionResponseMessage, EditInteractionResponse, EditMember,
+    CreateInteractionResponseMessage, EditMember,
 };
 use serenity::builder::CreateCommand;
 
@@ -27,8 +26,8 @@ user: Rewrite the name AlbyPro to be a bread related pun.
 assistant: [AlbyDough].
 ";
 
-/// AfkaraLP's User ID
-const OWNER_ID: u64 = 387230392278712320;
+/// `AfkaraLP`'s User ID
+const OWNER_ID: u64 = 387_230_392_278_712_320;
 
 pub async fn run(ctx: &Context, interaction: &CommandInteraction) -> serenity::Result<()> {
     match interaction.user.id.get() {
@@ -99,24 +98,29 @@ async fn rename_users(ctx: &Context, interaction: &CommandInteraction) -> sereni
             //     )
             //     .await;
 
-            let new_name: String = match db.get(&user_id) {
-                Some(bread_name) => bread_name.to_string(),
-                None => {
-                    let generated_name = {
-                        loop {
-                            match generate_name(current_name).await {
-                                Ok(generated_name) => break generated_name,
-                                Err(e) => {
-                                    eprintln!(
-                                        "[Error] ({e}) when generating username. Retrying..."
-                                    );
-                                }
-                            }
+            let new_name: String = if let Some(bread_name) = db.get(&user_id) {
+                bread_name.clone()
+            } else {
+                let mut new_name = None;
+
+                for _ in 0..5 {
+                    match generate_name(current_name).await {
+                        Ok(generated_name) => {
+                            new_name.replace(generated_name);
+                            break;
                         }
-                    };
+                        Err(e) => {
+                            eprintln!("[Error] ({e}) when generating username. Retrying...");
+                        }
+                    }
+                }
+                if let Some(generated_name) = new_name {
                     insert_name_to_database(user_id, &generated_name)
                         .map_err(|_| serenity::Error::Other("Failed inserting name into DB"))?;
                     generated_name
+                } else {
+                    eprintln!("failed generating name 5 times");
+                    continue;
                 }
             };
             eprintln!("Got new username: {new_name}!");
@@ -127,7 +131,7 @@ async fn rename_users(ctx: &Context, interaction: &CommandInteraction) -> sereni
             }
 
             if let Err(e) = user.edit(ctx, EditMember::new().nickname(new_name)).await {
-                eprintln!("Failed to edit username of {} because: {e}", old_name);
+                eprintln!("Failed to edit username of {old_name} because: {e}");
             }
         }
     }
@@ -142,7 +146,7 @@ fn dump_database() -> HashMap<u64, String> {
     let mut stmt = match conn.prepare("SELECT user_id, bread_name FROM breads") {
         Ok(s) => s,
         Err(e) => {
-            eprintln!("Failed to prepare statement: {}", e);
+            eprintln!("Failed to prepare statement: {e}");
             return map;
         }
     };
@@ -152,15 +156,13 @@ fn dump_database() -> HashMap<u64, String> {
     }) {
         Ok(r) => r,
         Err(e) => {
-            eprintln!("Failed to query rows: {}", e);
+            eprintln!("Failed to query rows: {e}");
             return map;
         }
     };
 
-    for row_result in rows {
-        if let Ok((user_id, bread_name)) = row_result {
-            map.insert(user_id, bread_name);
-        }
+    for (user_id, bread_name) in rows.flatten() {
+        map.insert(user_id, bread_name);
     }
 
     map
@@ -172,6 +174,7 @@ fn insert_name_to_database(user_id: u64, name: &str) -> rusqlite::Result<()> {
     )?;
     Ok(())
 }
+#[allow(unused)]
 fn get_name_from_database(user_id: u64) -> rusqlite::Result<Option<String>> {
     BREAD_STATE
         .db_connection
@@ -200,13 +203,13 @@ async fn generate_name(name: impl Display) -> serenity::Result<String> {
         tool_call_id: None,
     };
     let request = ChatCompletionRequest::new(
-        ENV_VARS.model_name.to_string(),
+        ENV_VARS.model_name.clone(),
         vec![system_prompt, user_prompt],
     )
     .stop(vec!["]".into()]);
 
-    #[allow(const_item_mutation)]
-    let completion = BREAD_STATE
+    let bread_state = &mut *BREAD_STATE;
+    let completion = bread_state
         .openai_client
         .chat_completion(request)
         .await
@@ -214,14 +217,14 @@ async fn generate_name(name: impl Display) -> serenity::Result<String> {
 
     let message = completion
         .choices
-        .get(0)
+        .first()
         .map(|v| v.message.clone().content.unwrap_or_default())
         .ok_or(serenity::Error::Other(
             "Failed to extract from LLM Completion",
         ))?;
 
     message
-        .split("[")
+        .split('[')
         .nth(1)
         .map(ToOwned::to_owned)
         .ok_or(serenity::Error::Other("failed splitting llm message at ["))

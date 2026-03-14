@@ -18,7 +18,8 @@ impl EventHandler for Handler {
     async fn ready(&self, ctx: Context, ready: Ready) {
         println!("{} is connected!", ready.user.name);
 
-        let guild_id = GuildId::new(ENV_VARS.guild_id);
+        let env_vars = &ENV_VARS;
+        let guild_id = GuildId::new(env_vars.guild_id);
 
         guild_id
             .set_commands(&ctx.http, vec![commands::rename::register()])
@@ -51,7 +52,8 @@ impl EventHandler for Handler {
 
 #[tokio::main]
 async fn main() {
-    let mut client = Client::builder(&ENV_VARS.discord_token, GatewayIntents::privileged())
+    let env_vars = &ENV_VARS;
+    let mut client = Client::builder(&env_vars.discord_token, GatewayIntents::privileged())
         .event_handler(Handler)
         .await
         .expect("Error creating client");
