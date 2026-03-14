@@ -24,17 +24,22 @@ impl EventHandler for Handler {
         _new: Option<Member>,
         event: GuildMemberUpdateEvent,
     ) {
-        let user = event.user;
-        eprintln!("renaming {} since update was detected", user.name);
-        let guild_id = event.guild_id;
-        let Ok(mut member) = guild_id.member(&ctx, &user.id).await else {
-            return eprintln!("didn't get guild member new member");
-        };
+        let event_member = event.user;
         let db = dump_database();
-        let Some(entry) = db.get(&user.id.get()) else {
+        let Some(correlating_bread_name) = db.get(&event_member.id.get()) else {
             return eprintln!("no name for user_id in db found");
         };
-        _ = member.edit(ctx, EditMember::new().nickname(entry)).await;
+        let guild_id = event.guild_id;
+        let Ok(mut fetched_member) = guild_id.member(&ctx, &event_member.id).await else {
+            return eprintln!("didn't get guild member new member");
+        };
+        if fetched_member.nick.as_ref() == Some(correlating_bread_name) {
+            return;
+        }
+        eprintln!("renaming {} since update was detected", event_member.name,);
+        _ = fetched_member
+            .edit(ctx, EditMember::new().nickname(correlating_bread_name))
+            .await;
     }
 
     async fn ready(&self, ctx: Context, ready: Ready) {
