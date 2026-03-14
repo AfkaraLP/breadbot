@@ -24,7 +24,7 @@ pub const BREAD_STATE: LazyLock<BreadState> = LazyLock::new(|| {
             .map_err(|e| anyhow!("failed building client {e:?}"))
             .unwrap(),
     };
-    let db_connection = Connection::open("users.db").expect("Failed to open db");
+    let db_connection = Connection::open(&env_vars.db_location).expect("Failed to open db");
     db_connection
         .execute(
             "CREATE TABLE IF NOT EXISTS breads (

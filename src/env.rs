@@ -6,9 +6,11 @@ pub struct EnvVars {
     pub llm_endpoint: String,
     pub model_name: String,
     pub llm_api_key: Option<String>,
+    pub db_location: String,
 }
 
 pub static ENV_VARS: LazyLock<EnvVars> = LazyLock::new(|| EnvVars {
+    db_location: dotenv::var("DB_LOCATION").expect("Please provide database path"),
     guild_id: dotenv::var("GUILD_ID")
         .map(|v| v.parse::<u64>())
         .expect("No guild id found in .env")
