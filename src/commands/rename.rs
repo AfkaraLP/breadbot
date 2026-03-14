@@ -138,7 +138,7 @@ async fn rename_users(ctx: &Context, interaction: &CommandInteraction) -> sereni
     Ok(())
 }
 
-fn dump_database() -> HashMap<u64, String> {
+pub fn dump_database() -> HashMap<u64, String> {
     let mut map = HashMap::new();
 
     let conn = &BREAD_STATE.db_connection;
