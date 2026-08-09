@@ -15,6 +15,7 @@ use serenity::all::{
 use serenity::builder::CreateCommand;
 
 use crate::env::ENV_VARS;
+use crate::OWNER_ID;
 use crate::state::BREAD_STATE;
 
 const SYSTEM_PROMPT: &str = "You are a professional pun writer that specialized in bread puns. you are very creative. Your response contains the name encapsulated in []. for example [name_1]. be sure to have a very creative name but have it still adjacent to the original name. and keep in mind the format as it is very important.  example(s):
@@ -25,9 +26,6 @@ assistant: [Breadix].
 user: Rewrite the name AlbyPro to be a bread related pun.
 assistant: [AlbyDough].
 ";
-
-/// `AfkaraLP`'s User ID
-const OWNER_ID: u64 = 387_230_392_278_712_320;
 
 pub async fn run(ctx: &Context, interaction: &CommandInteraction) -> serenity::Result<()> {
     match interaction.user.id.get() {

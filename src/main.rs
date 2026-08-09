@@ -2,7 +2,7 @@ mod commands;
 mod env;
 mod state;
 
-use serenity::all::{EditMember, GuildMemberUpdateEvent, Member};
+use serenity::all::{EditMember, GuildMemberUpdateEvent, Member, Message};
 use serenity::async_trait;
 use serenity::builder::{CreateInteractionResponse, CreateInteractionResponseMessage};
 use serenity::model::application::Interaction;
@@ -10,13 +10,23 @@ use serenity::model::gateway::Ready;
 use serenity::model::id::GuildId;
 use serenity::prelude::*;
 
+use crate::commands::remove_mrbreast_scan::delete_mr_beast_message;
 use crate::commands::rename::dump_database;
 use crate::env::ENV_VARS;
+
+/// `AfkaraLP`'s User ID
+pub const OWNER_ID: u64 = 387_230_392_278_712_320;
 
 struct Handler;
 
 #[async_trait]
 impl EventHandler for Handler {
+    async fn message(&self, ctx: Context, new_message: Message) {
+        if let Err(e) = delete_mr_beast_message(new_message, ctx.http).await {
+            eprintln!("Failed deleting mr breast message because {e:#?}");
+        }
+    }
+
     async fn guild_member_update(
         &self,
         ctx: Context,
@@ -36,7 +46,7 @@ impl EventHandler for Handler {
         if fetched_member.nick.as_ref() == Some(correlating_bread_name) {
             return;
         }
-        eprintln!("renaming {} since update was detected", event_member.name,);
+        eprintln!("renaming {} since update was detected", event_member.name);
         _ = fetched_member
             .edit(ctx, EditMember::new().nickname(correlating_bread_name))
             .await;
@@ -49,7 +59,13 @@ impl EventHandler for Handler {
         let guild_id = GuildId::new(env_vars.guild_id);
 
         guild_id
-            .set_commands(&ctx.http, vec![commands::rename::register()])
+            .set_commands(
+                &ctx.http,
+                vec![
+                    commands::rename::register(),
+                    commands::remove_mrbreast_scan::register(),
+                ],
+            )
             .await
             .expect("Failed registering a command");
     }
@@ -59,6 +75,12 @@ impl EventHandler for Handler {
             let content = match command.data.name.as_str() {
                 "rename" => {
                     if let Err(e) = commands::rename::run(&ctx, &command).await {
+                        eprintln!("Error running rename command: {e}");
+                    }
+                    None
+                }
+                "delete_mr_beast_messages" => {
+                    if let Err(e) = commands::remove_mrbreast_scan::run(&ctx, &command).await {
                         eprintln!("Error running rename command: {e}");
                     }
                     None

@@ -19,6 +19,6 @@ pub static ENV_VARS: LazyLock<EnvVars> = LazyLock::new(|| EnvVars {
         .expect("Expected a discord token in the environment"),
     llm_endpoint: dotenv::var("OPENAI_ENDPOINT")
         .expect("Please specify a chat completion endpoint"),
-    llm_api_key: dotenv::var("LLM_API_KEY").map(Option::Some).unwrap_or(None),
+    llm_api_key: dotenv::var("LLM_API_KEY").ok(),
     model_name: dotenv::var("MODEL_NAME").expect("Please provide a model name"),
 });
