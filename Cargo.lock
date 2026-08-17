@@ -120,6 +120,7 @@ dependencies = [
  "openai-api-rs",
  "reqwest 0.13.4",
  "rusqlite",
+ "serde_json",
  "serenity",
  "tokio",
 ]
@@ -1713,6 +1714,8 @@ dependencies = [
  "rustls 0.23.35",
  "rustls-pki-types",
  "rustls-platform-verifier",
+ "serde",
+ "serde_json",
  "sync_wrapper 1.0.2",
  "tokio",
  "tokio-rustls 0.26.4",

@@ -34,7 +34,7 @@ pub async fn run(ctx: &Context, interaction: &CommandInteraction) -> serenity::R
     let Ok(response) = client
         .post("https://trump.afkara.dev/api/synthesize")
         .bearer_auth("trump67")
-        .body(phrase)
+        .json(&std::collections::BTreeMap::from([("text", phrase)]))
         .send()
         .await
     else {
@@ -42,6 +42,34 @@ pub async fn run(ctx: &Context, interaction: &CommandInteraction) -> serenity::R
             ctx,
             interaction,
             "Failed sending the request to the TTS server — Trump is in a busy meeting atm most likely.",
+        );
+        return Ok(());
+    };
+    let Ok(body) = response.json::<serde_json::Value>().await else {
+        _ = silently_say_trump_err(
+            ctx,
+            interaction,
+            "Could not get audio from server — Trump is probably sleeping right now.",
+        );
+        return Ok(());
+    };
+    let Some(audio_url) = body.get("audio_url").and_then(|value| value.as_str()) else {
+        _ = silently_say_trump_err(
+            ctx,
+            interaction,
+            "Could not get audio from server — Trump is probably sleeping right now.",
+        );
+        return Ok(());
+    };
+    let Ok(response) = client
+        .get(format!("https://trump.afkara.dev{audio_url}"))
+        .send()
+        .await
+    else {
+        _ = silently_say_trump_err(
+            ctx,
+            interaction,
+            "Could not get audio from server — Trump is probably sleeping right now.",
         );
         return Ok(());
     };
