@@ -72,7 +72,7 @@ pub fn register() -> CreateCommand {
         "input",
         "The phrase you want our great president to say — tremendous.",
     ))
-    .description("Have our wonderful president say something — this is the real president, despite what the fake news wants you to believe")
+    .description("Generate a Trump-style audio clip from text.")
 }
 
 async fn silently_say_trump_err<T: ToString>(
