@@ -64,6 +64,7 @@ impl EventHandler for Handler {
                 vec![
                     commands::rename::register(),
                     commands::remove_mrbreast_scan::register(),
+                    commands::trump::register(),
                 ],
             )
             .await
@@ -81,7 +82,13 @@ impl EventHandler for Handler {
                 }
                 "delete_mr_beast_messages" => {
                     if let Err(e) = commands::remove_mrbreast_scan::run(&ctx, &command).await {
-                        eprintln!("Error running rename command: {e}");
+                        eprintln!("Error running mrbeast command: {e}");
+                    }
+                    None
+                }
+                "trump" => {
+                    if let Err(e) = commands::trump::run(&ctx, &command).await {
+                        eprintln!("Error running trump command: {e}");
                     }
                     None
                 }
